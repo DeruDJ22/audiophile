@@ -77,9 +77,16 @@ jobs:
           java-version: '17'
 
       - name: Set up Android NDK & CMake
-        uses: nsetup/setup-android-ndk@v1
-        with:
-          ndk-version: r25c
+        run: |
+          echo "Installing Android NDK r25c..."
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
+          NDK_PATH="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
+          if [ ! -d "$NDK_PATH" ]; then
+            NDK_PATH=$(ls -d ${ANDROID_SDK_ROOT}/ndk/* | tail -n 1)
+          fi
+          echo "ANDROID_NDK=$NDK_PATH" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          echo "Android NDK path: $NDK_PATH"
 
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
@@ -150,7 +157,7 @@ jobs:
           mv app-release.apk KuroakaiAudio-Android-Release.apk
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             KuroakaiAudio-Windows-x64.zip
