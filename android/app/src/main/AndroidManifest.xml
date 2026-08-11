@@ -1,10 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.kuroakai.audio">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Audio & Storage Permissions -->
-    <!-- Android 13+ (API 33+) Scoped Storage Permission -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <!-- Legacy Android 12 and below permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -25,18 +22,19 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            
+
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+
             <!-- Default Launcher Intent Filter -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- ================================================================= -->
-            <!-- OS INTEGRATION: "Open With..." File Association Intent Filters    -->
-            <!-- ================================================================= -->
-
-            <!-- 1. Handle standard audio MIME types (FLAC, MP3, WAV, AAC, OGG, etc.) -->
+            <!-- OS INTEGRATION: "Open With..." File Association Intent Filters -->
             <intent-filter android:label="Kuroakai Audiophile Player">
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MUSIC_PLAYER" />
@@ -47,7 +45,6 @@
                 <data android:mimeType="audio/*" />
             </intent-filter>
 
-            <!-- 2. Handle specific High-Res Audio file extensions explicitly (.flac, .dsf, .dff, .wav, .mp3, .alac) -->
             <intent-filter android:label="Kuroakai Audiophile Player">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -71,4 +68,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
 </manifest>
