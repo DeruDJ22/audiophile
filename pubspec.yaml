@@ -22,6 +22,9 @@ dependencies:
   # OS Integration & File Association
   app_links: ^6.3.2
 
+  # Persistent Storage
+  shared_preferences: ^2.3.2
+
   # UI Design Icons
   cupertino_icons: ^1.0.8
 
