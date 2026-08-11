@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1F2833"/>
+      <stop offset="100%" stop-color="#0B0C10"/>
+    </radialGradient>
+    <linearGradient id="rubyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF2E63"/>
+      <stop offset="100%" stop-color="#E50914"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Dark Metal Badge -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#E50914" stroke-width="4" opacity="0.4"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
+
+  <!-- Soundwave & Monogram Visual Element -->
+  <g transform="translate(256, 256)" filter="url(#glow)">
+    <!-- Vinyl / Audio Disc Circles -->
+    <circle cx="0" cy="0" r="140" fill="none" stroke="url(#rubyGrad)" stroke-width="8"/>
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="12 8" opacity="0.5"/>
+    <circle cx="0" cy="0" r="50" fill="url(#rubyGrad)"/>
+
+    <!-- Equalizer Bars -->
+    <rect x="-90" y="-30" width="12" height="60" rx="6" fill="url(#rubyGrad)"/>
+    <rect x="-65" y="-55" width="12" height="110" rx="6" fill="url(#rubyGrad)"/>
+    <rect x="53" y="-55" width="12" height="110" rx="6" fill="url(#rubyGrad)"/>
+    <rect x="78" y="-30" width="12" height="60" rx="6" fill="url(#rubyGrad)"/>
+  </g>
+</svg>

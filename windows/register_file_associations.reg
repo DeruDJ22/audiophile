@@ -1,0 +1,42 @@
+Windows Registry Editor Version 5.00
+
+; ==============================================================================
+; KUROAKAIAUDIO WINDOWS FILE ASSOCIATIONS REGISTRY FILE
+; Replace "C:\\Program Files\\KuroakaiAudio\\kuroakai_audio.exe" with actual path
+; ==============================================================================
+
+; --- FLAC File Association ---
+[HKEY_CURRENT_USER\Software\Classes\.flac]
+@="KuroakaiAudio.flac"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.flac]
+@="FLAC Audio File (Kuroakai Bit-Perfect Engine)"
+"FriendlyTypeName"="FLAC Lossless Audio"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.flac\DefaultIcon]
+@="\"C:\\Program Files\\KuroakaiAudio\\kuroakai_audio.exe\",0"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.flac\shell\open\command]
+@="\"C:\\Program Files\\KuroakaiAudio\\kuroakai_audio.exe\" \"%1\""
+
+
+; --- DSD (DSF/DFF) File Association ---
+[HKEY_CURRENT_USER\Software\Classes\.dsf]
+@="KuroakaiAudio.dsf"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.dsf]
+@="Direct Stream Digital Audio (DSF)"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.dsf\shell\open\command]
+@="\"C:\\Program Files\\KuroakaiAudio\\kuroakai_audio.exe\" \"%1\""
+
+
+; --- MP3 File Association ---
+[HKEY_CURRENT_USER\Software\Classes\.mp3]
+@="KuroakaiAudio.mp3"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.mp3]
+@="MP3 Audio File"
+
+[HKEY_CURRENT_USER\Software\Classes\KuroakaiAudio.mp3\shell\open\command]
+@="\"C:\\Program Files\\KuroakaiAudio\\kuroakai_audio.exe\" \"%1\""

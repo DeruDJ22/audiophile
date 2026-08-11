@@ -1,0 +1,167 @@
+name: KuroakaiAudio Automated Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # ============================================================================
+  # 1. WINDOWS BUILD JOB (C++ Core DLL + Flutter Win32 Release EXE)
+  # ============================================================================
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC & CMake
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Build C++ Core Audio Library (DLL)
+        run: |
+          cmake -B build/cpp -S cpp_core -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/cpp --config Release
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Windows Application
+        run: flutter build windows --release
+
+      - name: Bundle C++ DLL into Release Directory
+        run: |
+          Copy-Item -Path "build/cpp/Release/kuroakai_audio.dll" -Destination "build/windows/x64/runner/Release/" -Force
+
+      - name: Package Windows Binary Zip
+        run: |
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "KuroakaiAudio-Windows-x64.zip"
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: KuroakaiAudio-Windows-x64.zip
+
+  # ============================================================================
+  # 2. ANDROID BUILD JOB (C++ Shared Library SO + Flutter Android APK)
+  # ============================================================================
+  build-android:
+    name: Build Android Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android NDK & CMake
+        uses: nsetup/setup-android-ndk@v1
+        with:
+          ndk-version: r25c
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Build C++ Core Shared Library for Android ABIs
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/armeabi-v7a
+          mkdir -p android/app/src/main/jniLibs/x86_64
+          
+          # Compile arm64-v8a
+          cmake -B build/cpp_arm64 -S cpp_core \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-21 \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/cpp_arm64
+          cp build/cpp_arm64/libkuroakai_audio.so android/app/src/main/jniLibs/arm64-v8a/
+
+          # Compile armeabi-v7a
+          cmake -B build/cpp_armv7 -S cpp_core \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=armeabi-v7a \
+            -DANDROID_PLATFORM=android-21 \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/cpp_armv7
+          cp build/cpp_armv7/libkuroakai_audio.so android/app/src/main/jniLibs/armeabi-v7a/
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Android APK (Release)
+        run: flutter build apk --release
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # ============================================================================
+  # 3. GITHUB RELEASES PUBLICATION JOB
+  # ============================================================================
+  publish-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release
+
+      - name: Prepare Release Assets
+        run: |
+          mv app-release.apk KuroakaiAudio-Android-Release.apk
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            KuroakaiAudio-Windows-x64.zip
+            KuroakaiAudio-Android-Release.apk
+          name: KuroakaiAudio Release ${{ github.ref_name }}
+          body: |
+            ## KuroakaiAudio Official Release ${{ github.ref_name }}
+            
+            Audiophile-grade music player with bit-perfect WASAPI Exclusive / Oboe C++ core audio engine.
+
+            ### Downloads:
+            - 🪟 **Windows (x64)**: `KuroakaiAudio-Windows-x64.zip`
+            - 🤖 **Android**: `KuroakaiAudio-Android-Release.apk`
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
