@@ -10,8 +10,6 @@ add_definitions(-DKUROAKAI_EXPORTS)
 # Source and Include Specifications
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${FFMPEG_INCLUDE_DIR}
-    ${MINIAUDIO_INCLUDE_DIR}
 )
 
 set(SOURCE_FILES
@@ -35,25 +33,20 @@ if(WIN32)
         ksuser
         winmm
         ole32
-        avcodec
-        avformat
-        swresample
-        avutil
     )
 elseif(ANDROID)
-    # Android NDK OpenSL ES / AAudio / Oboe System Libraries
+    # Android NDK System Libraries
     find_library(LOG_LIB log)
-    find_library(AAUDIO_LIB aaudio)
     find_library(OPENSLES_LIB OpenSLES)
-    
+    find_library(AAUDIO_LIB aaudio)
+
+    set(ANDROID_LIBS ${LOG_LIB} ${OPENSLES_LIB})
+    if(AAUDIO_LIB)
+        list(APPEND ANDROID_LIBS ${AAUDIO_LIB})
+    endif()
+
     target_link_libraries(kuroakai_audio PRIVATE
-        ${LOG_LIB}
-        ${AAUDIO_LIB}
-        ${OPENSLES_LIB}
-        avcodec
-        avformat
-        swresample
-        avutil
+        ${ANDROID_LIBS}
     )
 endif()
 

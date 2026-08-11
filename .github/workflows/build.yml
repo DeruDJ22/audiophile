@@ -159,12 +159,13 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v1.0.0"
+          name: "KuroakaiAudio Release v1.0.0"
           files: |
             KuroakaiAudio-Windows-x64.zip
             KuroakaiAudio-Android-Release.apk
-          name: KuroakaiAudio Release ${{ github.ref_name }}
           body: |
-            ## KuroakaiAudio Official Release ${{ github.ref_name }}
+            ## KuroakaiAudio Official Release v1.0.0
             
             Audiophile-grade music player with bit-perfect WASAPI Exclusive / Oboe C++ core audio engine.
 
