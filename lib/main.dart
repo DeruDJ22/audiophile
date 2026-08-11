@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'ffi/kuroakai_bindings.dart';
 import 'services/app_link_service.dart';
+import 'services/cover_art_service.dart';
 import 'services/file_picker_service.dart';
 import 'services/playlist_service.dart';
 
@@ -38,7 +40,7 @@ class KuroakaiAudioApp extends StatelessWidget {
           inactiveTrackColor: Colors.white12,
           thumbColor: Color(0xFFFF3344),
           overlayColor: Color(0x33E50914),
-          trackHeight: 4.0,
+          trackHeight: 3.0,
         ),
       ),
       home: MainScreen(initialArgs: initialArgs),
@@ -76,6 +78,8 @@ class _MainScreenState extends State<MainScreen>
   String? _currentFilePath;
   String _currentTitle = 'No Track Selected';
   String _currentArtist = 'Kuroakai Audio Engine';
+  Uint8List? _currentCoverArt;
+  double _localVolume = 1.0;
 
   // Library & Playlists
   final List<String> _librarySongs = [];
@@ -166,16 +170,28 @@ class _MainScreenState extends State<MainScreen>
 
   Future<void> _playFile(String path) async {
     final fileName = path.split(Platform.pathSeparator).last;
+    final title = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+
     setState(() {
       _currentFilePath = path;
-      _currentTitle = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+      _currentTitle = title;
       _currentArtist = 'Local Lossless File';
+      _currentCoverArt = null;
       if (!_librarySongs.contains(path)) {
         _librarySongs.insert(0, path);
       }
     });
 
     _bindings.playFile(path);
+    _bindings.setVolume(_localVolume);
+
+    // Extract embedded album art cover
+    final artBytes = await CoverArtService.getCoverArt(path);
+    if (mounted && _currentFilePath == path) {
+      setState(() {
+        _currentCoverArt = artBytes;
+      });
+    }
   }
 
   void _onPlayPausePressed() {
@@ -222,6 +238,25 @@ class _MainScreenState extends State<MainScreen>
     final mins = duration.inMinutes;
     final secs = duration.inSeconds % 60;
     return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  void _updateEqPreset(String preset) {
+    setState(() {
+      _activeEqPreset = preset;
+      if (preset == 'Direct Bit-Perfect') _eqValues = [0, 0, 0, 0, 0];
+      if (preset == 'Bass Boost') _eqValues = [6, 4, 0, 0, -2];
+      if (preset == 'Vocal Enhancement') _eqValues = [-2, 2, 5, 3, 0];
+      if (preset == 'Treble Boost') _eqValues = [-3, 0, 1, 4, 7];
+    });
+    _bindings.setEqAll(_eqValues[0], _eqValues[1], _eqValues[2], _eqValues[3], _eqValues[4]);
+  }
+
+  void _updateEqBand(int bandIndex, double val) {
+    setState(() {
+      _eqValues[bandIndex] = val;
+      _activeEqPreset = 'Custom';
+    });
+    _bindings.setEqBand(bandIndex, val);
   }
 
   // --- Playlist Actions ---
@@ -510,7 +545,7 @@ class _MainScreenState extends State<MainScreen>
           ),
           const SizedBox(height: 20),
 
-          // Animated Spinning Vinyl Visualizer
+          // Animated Spinning Vinyl with Cover Art
           RotationTransition(
             turns: _vinylAnimController,
             child: Container(
@@ -531,15 +566,16 @@ class _MainScreenState extends State<MainScreen>
                 ],
               ),
               child: Center(
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE50914),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.music_note_rounded, color: Colors.white, size: 28),
+                child: ClipOval(
+                  child: SizedBox(
+                    width: 70,
+                    height: 70,
+                    child: _currentCoverArt != null
+                        ? Image.memory(_currentCoverArt!, fit: BoxFit.cover)
+                        : Container(
+                            color: const Color(0xFFE50914),
+                            child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 32),
+                          ),
                   ),
                 ),
               ),
@@ -651,7 +687,17 @@ class _MainScreenState extends State<MainScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          const Icon(Icons.album_rounded, color: Color(0xFFE50914), size: 36),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: 42,
+              height: 42,
+              color: const Color(0xFFE50914),
+              child: _currentCoverArt != null
+                  ? Image.memory(_currentCoverArt!, fit: BoxFit.cover)
+                  : const Icon(Icons.album_rounded, color: Colors.white, size: 28),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -999,13 +1045,7 @@ class _MainScreenState extends State<MainScreen>
                     labelStyle: TextStyle(color: isSel ? Colors.white : Colors.white70, fontWeight: isSel ? FontWeight.bold : FontWeight.normal),
                     onSelected: (sel) {
                       if (sel) {
-                        setState(() {
-                          _activeEqPreset = preset;
-                          if (preset == 'Direct Bit-Perfect') _eqValues = [0, 0, 0, 0, 0];
-                          if (preset == 'Bass Boost') _eqValues = [6, 4, 0, 0, -2];
-                          if (preset == 'Vocal Enhancement') _eqValues = [-2, 2, 5, 3, 0];
-                          if (preset == 'Treble Boost') _eqValues = [-3, 0, 1, 4, 7];
-                        });
+                        _updateEqPreset(preset);
                       }
                     },
                   ),
@@ -1039,10 +1079,7 @@ class _MainScreenState extends State<MainScreen>
                             min: -12.0,
                             max: 12.0,
                             onChanged: (val) {
-                              setState(() {
-                                _eqValues[idx] = val;
-                                _activeEqPreset = 'Custom';
-                              });
+                              _updateEqBand(idx, val);
                             },
                           ),
                         ),
@@ -1144,30 +1181,33 @@ class _MainScreenState extends State<MainScreen>
   }
 
   // ===========================================================================
-  // BOTTOM PLAYER BAR (DESKTOP FULL WIDTH)
+  // BOTTOM PLAYER BAR (DESKTOP FULL WIDTH & PERFECT ALIGNMENT)
   // ===========================================================================
   Widget _buildBottomPlayerBar({required bool isDesktop}) {
     return Container(
-      height: 90,
+      height: 96,
       color: const Color(0xFF181820),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Track Thumbnail & Title Info
+          // Track Thumbnail Cover Art & Title Info
           SizedBox(
-            width: 220,
+            width: 240,
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 52,
+                    height: 52,
                     color: const Color(0xFFE50914),
-                    borderRadius: BorderRadius.circular(8),
+                    child: _currentCoverArt != null
+                        ? Image.memory(_currentCoverArt!, fit: BoxFit.cover)
+                        : const Icon(Icons.music_note_rounded, color: Colors.white, size: 30),
                   ),
-                  child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 28),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1193,26 +1233,29 @@ class _MainScreenState extends State<MainScreen>
             ),
           ),
 
-          // Central Transport Controls & Scrub Slider
+          // Central Transport Controls & Perfectly Positioned Scrub Slider
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Transport Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.skip_previous_rounded, color: Colors.white70),
+                      icon: const Icon(Icons.skip_previous_rounded, color: Colors.white70, size: 24),
                       onPressed: () {
                         if (_librarySongs.isNotEmpty) {
                           _playFile(_librarySongs.first);
                         }
                       },
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     IconButton(
-                      iconSize: 42,
+                      iconSize: 44,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                       icon: Icon(
                         _audioStatus.isPlaying
                             ? Icons.pause_circle_filled_rounded
@@ -1221,9 +1264,9 @@ class _MainScreenState extends State<MainScreen>
                       ),
                       onPressed: _onPlayPausePressed,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(Icons.skip_next_rounded, color: Colors.white70),
+                      icon: const Icon(Icons.skip_next_rounded, color: Colors.white70, size: 24),
                       onPressed: () {
                         if (_librarySongs.length > 1) {
                           _playFile(_librarySongs.last);
@@ -1232,35 +1275,59 @@ class _MainScreenState extends State<MainScreen>
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
 
                 // Scrub Bar Slider & Time
                 Row(
                   children: [
-                    Text(_formatDuration(_audioStatus.currentPosition), style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                    Expanded(
-                      child: Slider(
-                        value: _audioStatus.currentPosition.clamp(0.0, _audioStatus.duration > 0 ? _audioStatus.duration : 1.0),
-                        max: _audioStatus.duration > 0 ? _audioStatus.duration : 1.0,
-                        onChanged: (val) {
-                          _bindings.seek(val);
-                        },
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_audioStatus.currentPosition),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w500),
                       ),
                     ),
-                    Text(_formatDuration(_audioStatus.duration), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3.0,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12.0),
+                        ),
+                        child: Slider(
+                          value: _audioStatus.currentPosition.clamp(0.0, _audioStatus.duration > 0 ? _audioStatus.duration : 1.0),
+                          max: _audioStatus.duration > 0 ? _audioStatus.duration : 1.0,
+                          onChanged: (val) {
+                            _bindings.seek(val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_audioStatus.duration),
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
 
-          // Volume & Audio Format Badge
+          // Right: Format Badge & Instant Larger Volume Slider
           SizedBox(
-            width: 220,
+            width: 240,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE50914).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
@@ -1268,18 +1335,30 @@ class _MainScreenState extends State<MainScreen>
                   ),
                   child: Text(
                     _audioStatus.codecName,
-                    style: const TextStyle(color: Color(0xFFFF3344), fontWeight: FontWeight.bold, fontSize: 10),
+                    style: const TextStyle(color: Color(0xFFFF3344), fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Icon(Icons.volume_up_rounded, color: Colors.white54, size: 20),
+                const SizedBox(width: 14),
+                const Icon(Icons.volume_up_rounded, color: Colors.white70, size: 22),
+                const SizedBox(width: 6),
                 SizedBox(
-                  width: 90,
-                  child: Slider(
-                    value: _audioStatus.volume,
-                    onChanged: (val) {
-                      _bindings.setVolume(val);
-                    },
+                  width: 130,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 4.0,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.0),
+                    ),
+                    child: Slider(
+                      value: _localVolume,
+                      min: 0.0,
+                      max: 1.0,
+                      onChanged: (val) {
+                        setState(() {
+                          _localVolume = val;
+                        });
+                        _bindings.setVolume(val);
+                      },
+                    ),
                   ),
                 ),
               ],

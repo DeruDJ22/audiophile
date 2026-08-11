@@ -93,6 +93,13 @@ KUROAKAI_API void kuroakai_seek(double position_seconds);
 KUROAKAI_API void kuroakai_set_volume(float volume);
 
 /**
+ * Set 5-Band Equalizer gain levels in dB (-12.0 to +12.0 dB).
+ * Bands: 0=60Hz, 1=230Hz, 2=910Hz, 3=4kHz, 4=14kHz
+ */
+KUROAKAI_API void kuroakai_set_eq_band(int band_index, float gain_db);
+KUROAKAI_API void kuroakai_set_eq_all(float g60, float g230, float g910, float g4k, float g14k);
+
+/**
  * Query current playback status, bit depth, sample rate, and position.
  * 
  * @param status_out Pointer to KuroakaiAudioStatus structure to fill

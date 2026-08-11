@@ -76,6 +76,12 @@ typedef DartSeek = void Function(double position);
 typedef NativeSetVolume = Void Function(Float volume);
 typedef DartSetVolume = void Function(double volume);
 
+typedef NativeSetEqBand = Void Function(Int32 bandIndex, Float gainDb);
+typedef DartSetEqBand = void Function(int bandIndex, double gainDb);
+
+typedef NativeSetEqAll = Void Function(Float g60, Float g230, Float g910, Float g4k, Float g14k);
+typedef DartSetEqAll = void Function(double g60, double g230, double g910, double g4k, double g14k);
+
 typedef NativeGetStatus = Void Function(Pointer<KuroakaiAudioStatusStruct> statusOut);
 typedef DartGetStatus = void Function(Pointer<KuroakaiAudioStatusStruct> statusOut);
 
@@ -90,6 +96,8 @@ class KuroakaiAudioBindings {
   late DartVoid _stop;
   late DartSeek _seek;
   late DartSetVolume _setVolume;
+  late DartSetEqBand _setEqBand;
+  late DartSetEqAll _setEqAll;
   late DartGetStatus _getStatus;
   late DartVoid _cleanup;
 
@@ -124,6 +132,8 @@ class KuroakaiAudioBindings {
     _stop = _lib.lookupFunction<NativeVoid, DartVoid>('kuroakai_stop');
     _seek = _lib.lookupFunction<NativeSeek, DartSeek>('kuroakai_seek');
     _setVolume = _lib.lookupFunction<NativeSetVolume, DartSetVolume>('kuroakai_set_volume');
+    _setEqBand = _lib.lookupFunction<NativeSetEqBand, DartSetEqBand>('kuroakai_set_eq_band');
+    _setEqAll = _lib.lookupFunction<NativeSetEqAll, DartSetEqAll>('kuroakai_set_eq_all');
     _getStatus = _lib.lookupFunction<NativeGetStatus, DartGetStatus>('kuroakai_get_status');
     _cleanup = _lib.lookupFunction<NativeVoid, DartVoid>('kuroakai_cleanup');
   }
@@ -144,6 +154,9 @@ class KuroakaiAudioBindings {
   void stop() => _stop();
   void seek(double seconds) => _seek(seconds);
   void setVolume(double volume) => _setVolume(volume);
+  void setEqBand(int bandIndex, double gainDb) => _setEqBand(bandIndex, gainDb);
+  void setEqAll(double g60, double g230, double g910, double g4k, double g14k) =>
+      _setEqAll(g60, g230, g910, g4k, g14k);
 
   KuroakaiAudioStatus getStatus() {
     final statusPtr = calloc<KuroakaiAudioStatusStruct>();
