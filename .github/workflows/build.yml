@@ -167,7 +167,7 @@ jobs:
           body: |
             ## KuroakaiAudio Official Release v1.0.0
             
-            Audiophile-grade music player with bit-perfect WASAPI Exclusive / Oboe C++ core audio engine.
+            Audiophile-grade music player with high-fidelity shared audio C++ core audio engine.
 
             ### Downloads:
             - 🪟 **Windows (x64)**: `KuroakaiAudio-Windows-x64.zip`

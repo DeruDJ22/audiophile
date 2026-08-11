@@ -57,7 +57,7 @@ audiophile/
 
 ## 🚀 Key Technical Highlights
 
-1. **Bit-Perfect Audio Output**: Uses `miniaudio` configured for **WASAPI Exclusive Mode** on Windows and **Oboe / AAudio Low Latency** on Android.
+1. **Bit-Perfect Audio Output**: Uses `miniaudio` configured for **High-Fidelity Shared Audio Mode** on Windows and **Low Latency Audio** on Android, allowing simultaneous playback with other apps (YouTube, Discord, etc.) without audio device conflicts.
 2. **Universal Format Decoding**: Powered by FFmpeg (`libavcodec`, `libavformat`, `libswresample`) supporting FLAC, DSD (`.dsf`, `.dff`), MP3, WAV, AAC, ALAC, and AIFF up to 384kHz / 32-bit.
 3. **Accurate Bit Depth Detection**: Automatic source format analysis (8/16/24/32/64-bit) via `AVSampleFormat` mapping.
 4. **Android Scoped Storage Compliance**: Uses `file_picker` and `permission_handler` to query `READ_MEDIA_AUDIO` on Android 13+ without needing full disk access permissions.

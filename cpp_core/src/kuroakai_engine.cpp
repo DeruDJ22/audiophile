@@ -204,29 +204,21 @@ KUROAKAI_API int kuroakai_play_file(const char* filepath) {
     }
     g_ctx.current_position = 0.0;
 
-    // Device setup for WASAPI Exclusive (Windows) / Low Latency (Android)
+    // Device setup in Shared Mode (allows smooth simultaneous playback with other apps)
     ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
-    deviceConfig.playback.format   = ma_format_f32;
-    deviceConfig.playback.channels = g_ctx.channels;
-    deviceConfig.sampleRate        = g_ctx.sample_rate;
-    deviceConfig.dataCallback      = data_callback;
-    deviceConfig.pUserData         = &g_ctx;
-
-#if defined(_WIN32)
-    deviceConfig.playback.shareMode = ma_share_mode_exclusive;
-    deviceConfig.wasapi.noAutoConvertSRC = MA_TRUE;
-#endif
+    deviceConfig.playback.format    = ma_format_f32;
+    deviceConfig.playback.channels  = g_ctx.channels;
+    deviceConfig.sampleRate         = g_ctx.sample_rate;
+    deviceConfig.playback.shareMode = ma_share_mode_shared;
+    deviceConfig.dataCallback       = data_callback;
+    deviceConfig.pUserData          = &g_ctx;
 
     if (ma_device_init(NULL, &deviceConfig, &g_ctx.device) != MA_SUCCESS) {
-        // Fallback to shared mode if exclusive mode is unavailable on device
-        deviceConfig.playback.shareMode = ma_share_mode_shared;
-        if (ma_device_init(NULL, &deviceConfig, &g_ctx.device) != MA_SUCCESS) {
-            std::cerr << "[KuroakaiEngine] Failed to initialize playback device." << std::endl;
-            ma_decoder_uninit(&g_ctx.decoder);
-            g_ctx.decoder_initialized = false;
-            g_ctx.state.store(KUROAKAI_STATE_ERROR);
-            return -3;
-        }
+        std::cerr << "[KuroakaiEngine] Failed to initialize playback device." << std::endl;
+        ma_decoder_uninit(&g_ctx.decoder);
+        g_ctx.decoder_initialized = false;
+        g_ctx.state.store(KUROAKAI_STATE_ERROR);
+        return -3;
     }
 
     g_ctx.device_initialized = true;
