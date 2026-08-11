@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "kuroakai_engine.h"
 
 #define MINIAUDIO_IMPLEMENTATION
@@ -50,11 +51,11 @@ static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput,
     (void)pInput;
     KuroakaiContext* ctx = (KuroakaiContext*)pDevice->pUserData;
     if (!ctx || ctx->state.load() != KUROAKAI_STATE_PLAYING) {
-        std::memset(pOutput, 0, frameCount * ma_get_bytes_per_frame(pDevice->format, pDevice->channels));
+        std::memset(pOutput, 0, frameCount * ma_get_bytes_per_frame(pDevice->playback.format, pDevice->playback.channels));
         return;
     }
 
-    size_t samples_needed = frameCount * pDevice->channels;
+    size_t samples_needed = frameCount * pDevice->playback.channels;
     float* out_ptr = (float*)pOutput;
 
     std::lock_guard<std::mutex> lock(ctx->buffer_mutex);
@@ -212,13 +213,13 @@ KUROAKAI_API int kuroakai_play_file(const char* filepath) {
     deviceConfig.pUserData         = &g_ctx;
 
 #if defined(_WIN32)
-    deviceConfig.wasapi.shareMode = ma_wasapi_share_mode_exclusive;
+    deviceConfig.playback.shareMode = ma_share_mode_exclusive;
     deviceConfig.wasapi.noAutoConvertSRC = MA_TRUE;
 #endif
 
     if (ma_device_init(NULL, &deviceConfig, &g_ctx.device) != MA_SUCCESS) {
         // Fallback to shared mode if exclusive mode is unavailable on device
-        deviceConfig.wasapi.shareMode = ma_wasapi_share_mode_shared;
+        deviceConfig.playback.shareMode = ma_share_mode_shared;
         if (ma_device_init(NULL, &deviceConfig, &g_ctx.device) != MA_SUCCESS) {
             std::cerr << "[KuroakaiEngine] Failed to initialize playback device." << std::endl;
             ma_decoder_uninit(&g_ctx.decoder);
