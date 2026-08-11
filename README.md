@@ -13,12 +13,12 @@ KuroakaiAudio is a cross-platform, high-fidelity music player built with a high-
 
 Unduh installer/binary aplikasi siap pakai untuk **Windows (PC)** dan **Android (HP)** dari halaman **GitHub Releases**:
 
-[![Latest Release](https://img.shields.io/github/v/release/your-username/kuroakai_audio?style=for-the-badge&color=E50914&label=Latest%20Release)](../../releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/DeruDJ22/audiophile?style=for-the-badge&color=E50914&label=Latest%20Release)](https://github.com/DeruDJ22/audiophile/releases/latest)
 
 | Platform | Format File | Link Download |
 |---|---|---|
-| 🪟 **Windows PC (x64)** | `.zip` (Executable + DLL) | [📦 Download Windows Zip](../../releases/latest) |
-| 🤖 **Android HP** | `.apk` (Release Build) | [📱 Download Android APK](../../releases/latest) |
+| 🪟 **Windows PC (x64)** | `.zip` (Executable + DLL) | [📦 Download Windows Zip](https://github.com/DeruDJ22/audiophile/releases/latest) |
+| 🤖 **Android HP** | `.apk` (Release Build) | [📱 Download Android APK](https://github.com/DeruDJ22/audiophile/releases/latest) |
 
 > *Catatan: Setiap kali tag versi baru (seperti `v1.0.0`) di-push ke GitHub, sistem CI/CD GitHub Actions akan otomatis mengompilasi dan mengunggah file `.zip` (PC) dan `.apk` (HP) ke halaman Releases.*
 
