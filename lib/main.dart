@@ -162,7 +162,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
-            crossAxisAlignment: CrossAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Header & Logo Branding
               Row(
