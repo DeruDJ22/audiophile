@@ -37,6 +37,17 @@ jobs:
           cmake -B build/cpp -S cpp_core -DCMAKE_BUILD_TYPE=Release
           cmake --build build/cpp --config Release
 
+      - name: Setup Environment File (.env)
+        shell: pwsh
+        run: |
+          if ("${{ secrets.JAMENDO_CLIENT_ID }}" -ne "") {
+            "JAMENDO_CLIENT_ID=${{ secrets.JAMENDO_CLIENT_ID }}" | Out-File -Encoding utf8 .env
+          } elseif (Test-Path ".env.example") {
+            Copy-Item ".env.example" ".env"
+          } else {
+            New-Item -ItemType File -Path ".env"
+          }
+
       - name: Install Dependencies
         run: flutter pub get
 
@@ -118,6 +129,16 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
           cmake --build build/cpp_armv7
           cp build/cpp_armv7/libkuroakai_audio.so android/app/src/main/jniLibs/armeabi-v7a/
+
+      - name: Setup Environment File (.env)
+        run: |
+          if [ -n "${{ secrets.JAMENDO_CLIENT_ID }}" ]; then
+            echo "JAMENDO_CLIENT_ID=${{ secrets.JAMENDO_CLIENT_ID }}" > .env
+          elif [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            touch .env
+          fi
 
       - name: Install Dependencies
         run: flutter pub get
