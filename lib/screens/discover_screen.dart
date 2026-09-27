@@ -42,12 +42,43 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Text('Resolving audio stream... Please wait'),
+          ],
+        ),
+        duration: Duration(seconds: 3),
+      ),
+    );
+
     final track = await discover.importFromUrl(url);
-    if (track != null && mounted) {
-      _urlController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Imported: ${track.title}')),
-      );
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (track != null) {
+        _urlController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Imported: ${track.title} (${track.source})'),
+            backgroundColor: KuroakaiTheme.success,
+          ),
+        );
+      } else if (discover.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(discover.errorMessage!),
+            backgroundColor: KuroakaiTheme.primary,
+          ),
+        );
+      }
     }
   }
 
@@ -207,7 +238,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               style: const TextStyle(
                   color: KuroakaiTheme.textPrimary, fontSize: 14),
               decoration: const InputDecoration(
-                hintText: 'Paste direct audio URL to import...',
+                hintText: 'Paste YouTube, Spotify, Apple Music, or audio URL...',
                 hintStyle: TextStyle(color: KuroakaiTheme.textTertiary),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -226,13 +257,24 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     borderRadius: BorderRadius.circular(8)),
                 side: const BorderSide(color: KuroakaiTheme.border),
               ),
-              icon: const Icon(Icons.download_rounded,
-                  color: KuroakaiTheme.textSecondary, size: 18),
-              label: const Text('Import',
-                  style: TextStyle(
-                      color: KuroakaiTheme.textSecondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13)),
+              icon: discover.isLoading
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: KuroakaiTheme.primary,
+                      ),
+                    )
+                  : const Icon(Icons.download_rounded,
+                      color: KuroakaiTheme.textSecondary, size: 18),
+              label: Text(
+                discover.isLoading ? 'Resolving...' : 'Import',
+                style: const TextStyle(
+                    color: KuroakaiTheme.textSecondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13),
+              ),
               onPressed: discover.isLoading
                   ? null
                   : () => _onImportUrl(discover),

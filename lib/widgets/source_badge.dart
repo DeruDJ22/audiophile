@@ -10,6 +10,14 @@ class SourceBadge extends StatelessWidget {
 
   Color get _color {
     switch (source) {
+      case 'YouTube':
+        return const Color(0xFFFF0000); // YouTube Red
+      case 'Spotify':
+        return const Color(0xFF1DB954); // Spotify Green
+      case 'Apple Music':
+        return const Color(0xFFFA243C); // Apple Music Red/Pink
+      case 'SoundCloud':
+        return const Color(0xFFFF5500); // SoundCloud Orange
       case 'Archive.org':
         return const Color(0xFF4A90D9); // blue
       case 'Jamendo':
@@ -23,10 +31,18 @@ class SourceBadge extends StatelessWidget {
 
   IconData get _icon {
     switch (source) {
+      case 'YouTube':
+        return Icons.play_circle_fill_rounded;
+      case 'Spotify':
+        return Icons.graphic_eq_rounded;
+      case 'Apple Music':
+        return Icons.music_note_rounded;
+      case 'SoundCloud':
+        return Icons.cloud_rounded;
       case 'Archive.org':
         return Icons.account_balance_rounded;
       case 'Jamendo':
-        return Icons.music_note_rounded;
+        return Icons.library_music_rounded;
       case 'Imported':
         return Icons.link_rounded;
       default:

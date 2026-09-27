@@ -80,7 +80,8 @@ class DiscoverProvider extends ChangeNotifier {
       if (track != null) {
         _results.insert(0, track);
       } else {
-        _errorMessage = 'Could not import audio from this URL. Make sure it points to a valid audio file.';
+        _errorMessage =
+            'Could not resolve audio from this URL. Supported: YouTube, Spotify, Apple Music, SoundCloud, or direct audio streams.';
       }
       return track;
     } catch (e) {
